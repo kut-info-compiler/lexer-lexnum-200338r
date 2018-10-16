@@ -16,18 +16,18 @@ public class Lexer {
 		static final String TYPE_INT = "INT";
 		static final String TYPE_DEC = "DEC";
 		static final String TYPE_ERR = "ERR";
-		
+
 		Token(String tokenType, int start, int len) {
 			this.tokenType = tokenType;
 			this.start = start;
 			this.len = len;
 		}
-		
+
 		String tokenType;  /* トークンの種類 */
 		int start;         /* 文字列中のトークン開始位置 */
 		int len;           /* トークンの長さ */
 	}
-	
+
 	static final int CT_P = 0;
 	static final int CT_X = 1;
 	static final int CT_0 = 2;
@@ -48,7 +48,7 @@ public class Lexer {
 		if ('A' <= c && c <= 'F') return CT_A;
 		return CT_OTHER;
 	}
-	
+
 	int[][] delta = {
 		/* TODO */
 		/* 状態遷移表を作る */
@@ -58,6 +58,14 @@ public class Lexer {
 		/*{ ?, ?, ?, ?, ?, ?}, /* 状態0 */
 		/*{ ?, ?, ?, ?, ?, ?}, /* 状態1 */
 		/*...*/
+		{3, 100, 1, 2, 7, 100},
+		{3, 5, 4, 4, 7, 100},
+		{3, 100, 2, 2, 7, 100},
+		{100, 100, 6, 6, 100, 100},
+		{100, 100, 4, 4, 7, 100},
+		{100, 100, 7, 7, 7, 100},
+		{100, 100, 6, 6, 100, 100},
+		{100, 100, 7, 7, 7, 100}
 	};
 
 	/*
@@ -77,20 +85,43 @@ public class Lexer {
 		while (p < str.length()) {
 			int c = str.charAt(p); /* str の p 文字目を読み取る */
 			p++;
-			
+
 			int ct = getCharType(c);
 			int nextState = delta[currentState][ct];
 
 			/* TODO */
 			/* 行先がなければループを抜ける */
 			/* 行先が受理状態であれば「最後の受理状態」を更新する */
+			if (nextState == 100) break;
+
+			switch (nextState) {
+				case 1:
+					acceptMarker = Token.TYPE_INT;
+					acceptPos = p;
+					break;
+
+				case 2:
+					acceptMarker = Token.TYPE_INT;
+					acceptPos = p;
+					break;
+
+				case 6:
+					acceptMarker = Token.TYPE_DEC;
+					acceptPos = p;
+					break;
+
+				case 7:
+					acceptMarker = Token.TYPE_INT;
+					acceptPos = p;
+					break;
+			}
 
 			currentState = nextState;
 		}
-		
+
 		return new Token(acceptMarker, start, acceptPos - start);
 	}
-	
+
 	public static void main(String[] args) {
 		Scanner sc = new Scanner(System.in);
 		String str = sc.nextLine();  /* 1行読み取る */
